@@ -4,6 +4,7 @@ from django.core.paginator import Paginator
 from django.http import HttpResponse
 from .forms import TaskForm
 from django.contrib import messages
+import datetime
 
 from .models import Task
 
@@ -11,11 +12,17 @@ from .models import Task
 def taskList(request):
 
     search = request.GET.get('search')
+    filter = request.GET.get('filter')
+    tasksDoneRecently = Task.objects.filter(done='done', updated_ate__gt=datetime.datetime.now()-datetime.timedelta(days=30)).count()
+    tasksDone = Task.objects.filter(done='done', user=request.user).count()
+    tasksDoing = Task.objects.filter(done='doing', user=request.user).count()
 
     if search:
 
         tasks = Task.objects.filter(title__icontains=search, user=request.user)
-        return render(request, 'tasks/list.html', {'tasks': tasks})
+
+    elif filter:
+        tasks = Task.objects.filter(done=filter, user=request.user)
 
     else: 
 
@@ -27,7 +34,11 @@ def taskList(request):
 
         tasks = paginator.get_page(page)
         
-        return render(request, 'tasks/list.html', {'tasks': tasks})
+    return render(request, 'tasks/list.html', {
+        'tasks': tasks, 
+        'tasksrecently': tasksDoneRecently, 
+        'tasksdone': tasksDone,
+        'tasksDoing': tasksDoing})
 
 @login_required
 def taskView(request, id):
@@ -74,6 +85,21 @@ def deleteTask(request, id):
     messages.info(request, 'Tarefa deletada com sucesso.')
 
     return redirect('/')
+
+
+@login_required
+def changeStatus(request, id):
+    task = get_object_or_404(Task, pk=id)
+
+    if(task.done == 'doing'):
+        task.done = 'done'
+    else:
+        task.done = 'doing'
+
+    task.save()
+
+    return redirect('/')
+
 
 def helloWorld(request):
     return HttpResponse('Hello World!')

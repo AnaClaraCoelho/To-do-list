@@ -1,8 +1,10 @@
-( document ).ready(function() {
+$( document ).ready(function() {
 
+    var baseUrl   = 'http://localhost:8000/';
     var deleteBtn = $('.delete-btn');
     var searchBtn = $('#search-btn');
     var searchForm = $('#search-form');
+    var filter     = $('#filter');
     
     $(deleteBtn).on('click', function(e) {
 
